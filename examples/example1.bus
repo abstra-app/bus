@@ -1,11 +1,14 @@
-role "frontend"
-role "backend"
+role frontend
+role backend
 
-request "new-user"
+request new-user {
     name: string
     email: string
-response "new-user"
+}
+    
+response new-user {
     uuid: string
+}
 
-allow "frontend" request "new-user"
-allow "backend" response "new-user"
+allow frontend request new-user
+allow backend response new-user

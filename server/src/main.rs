@@ -1,9 +1,12 @@
+use pest::Parser;
+use pest_derive::Parser;
+
+#[derive(Parser)]
+#[grammar = "grammar.pest"]
+struct BusParser;
 use warp::Filter;
 use warp::ws::{WebSocket};
 use std::env;
-
-mod parser;
-use parser::{parse_body};
 
 #[tokio::main]
 async fn main() {
@@ -21,7 +24,14 @@ async fn main() {
     }
     let path = args[1].clone();
     let body = std::fs::read_to_string(path).unwrap();
-    let parsed_body = parse_body(&body);
+
+    let parsed = BusParser::parse(Rule::body, &body).unwrap_or_else(|e| panic!("{}", e));
+    for pair in parsed {
+        println!("Rule: {:?}", pair.as_rule());
+        for inner_pair in pair.into_inner() {
+            println!("Inner Rule: {:?}", inner_pair.as_rule());
+        }
+    }
     
     let ws_route = warp::path("ws")
         .and(warp::ws())

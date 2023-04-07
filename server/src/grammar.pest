@@ -1,0 +1,25 @@
+body      = { SOI ~ statement ~ (WS? ~ statement)* ~ WS? ~ EOI }
+statement = { allow_stmt | msg_stmt | role_stmt }
+
+allow_stmt = { "allow" ~ WS ~ role_name ~ WS ~ msg_type ~ WS ~ msg_name ~ (WS? ~ "when" ~ WS ~ filter_exp)? }
+msg_type   = { "broadcast" | "listen" | "request" | "response" }
+
+msg_stmt       = { broadcast_stmt | request_stmt | response_stmt }
+broadcast_stmt =  { "broadcast" ~ WS ~ msg_name ~ WS? ~ msg_params }
+request_stmt   =  { "request" ~ WS ~ msg_name ~ WS? ~ msg_params }
+response_stmt  =  { "response" ~ WS ~ msg_name ~ WS? ~ msg_params }
+
+msg_params = { "{" ~ (WS? ~ param_name ~ WS? ~ ":" ~ WS? ~ param_type ~ WS?)* ~ "}" }
+role_stmt  = { "role" ~ WS ~ role_name ~ (WS? ~ "extends" ~ WS ~ role_name)? }
+
+WS = { (" " | "\t" | "\r" | "\n")+ }
+// Required whitespace
+
+role_name  = @{ (ALPHA | "_" | "-") ~ (ALPHA | "_" | "-" | DIGIT)* }
+msg_name   = @{ (ALPHA | "_" | "-") ~ (ALPHA | "_" | "-" | DIGIT)* }
+param_name = @{ (ALPHA | "_" | "-") ~ (ALPHA | "_" | "-" | DIGIT)* }
+param_type = @{ (ALPHA | "_" | "-") ~ (ALPHA | "_" | "-" | DIGIT)* }
+filter_exp = @{ (ALPHA | "_" | "-") ~ (ALPHA | "_" | "-" | DIGIT)* }
+
+ALPHA = { 'a'..'z' | 'A'..'Z' }
+DIGIT = { '0'..'9' }
