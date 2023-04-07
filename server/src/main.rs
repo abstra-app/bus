@@ -7,8 +7,7 @@ mod policy;
 mod validator;
 use validator::message_from_str;
 mod connections;
-#[macro_use]
-extern crate lazy_static;
+use lazy_static::lazy_static;
 
 
 fn get_policy() -> Vec<Statement> {
