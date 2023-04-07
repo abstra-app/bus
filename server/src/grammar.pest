@@ -9,7 +9,9 @@ broadcast_stmt =  { "broadcast" ~ WS ~ msg_name ~ WS? ~ msg_params }
 request_stmt   =  { "request" ~ WS ~ msg_name ~ WS? ~ msg_params }
 response_stmt  =  { "response" ~ WS ~ msg_name ~ WS? ~ msg_params }
 
-msg_params = { "{" ~ (WS? ~ param_name ~ WS? ~ ":" ~ WS? ~ param_type ~ WS?)* ~ "}" }
+msg_params = { "{" ~ (WS? ~ msg_param ~ WS?)* ~ "}" }
+msg_param  = { param_name ~ WS? ~ ":" ~ WS? ~ param_type }
+
 role_stmt  = { "role" ~ WS ~ role_name ~ (WS? ~ "extends" ~ WS ~ role_name)? }
 
 WS = _{ (" " | "\t" | "\r" | "\n")+ }
