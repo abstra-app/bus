@@ -1,0 +1,11 @@
+role "frontend"
+role "backend"
+
+request "new-user"
+    name: string
+    email: string
+response "new-user"
+    uuid: string
+
+allow "frontend" request "new-user"
+allow "backend" response "new-user"
