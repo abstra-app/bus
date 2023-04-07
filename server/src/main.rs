@@ -36,8 +36,8 @@ lazy_static! {
 async fn main() {
     let ws_route = warp::path("ws")
         .and(warp::ws())
-        .map(|ws: warp::ws::Ws| { // Use the move keyword to capture the Arc reference
-            ws.on_upgrade(handle_websocket) // Pass a cloned Arc reference to the policy variable
+        .map(|ws: warp::ws::Ws| {
+            ws.on_upgrade(handle_websocket)
         });
     
     warp::serve(ws_route).run(([127, 0, 0, 1], 3030)).await;
@@ -49,7 +49,7 @@ async fn handle_websocket(ws: WebSocket) {
     while let Some(result) = ws_rx.next().await {
         let msg = result.unwrap();
         let message = message_from_str(
-            POLICY.clone(), // Get a reference to Vec<Statement>
+            POLICY.clone(),
             msg.to_str().unwrap()).unwrap();
         println!("Message: {:?}", message);
     }
