@@ -1,37 +1,34 @@
+use policy::{parse, Statement};
 use warp::Filter;
 use warp::ws::{WebSocket};
 use std::env;
-
+use futures::StreamExt;
 mod policy;
-use policy::{BusParser, Rule};
-use pest::Parser;
+mod validator;
+use validator::{message_from_str};
 
-#[tokio::main]
-async fn main() {
+fn get_policy() -> Option<Vec<Statement>> {
     let args: Vec<String> = env::args().collect();
     match args.len() {
         1 => {
             println!("Usage: cargo run --bin server <path to policy file>");
-            return;
+            return None;
         },
-        2 => {},
+        2 => {
+            let path = args[1].clone();
+            let body = std::fs::read_to_string(path).unwrap();
+            return Some(parse(&body));
+        },
         _ => {
             println!("Usage: cargo run --bin server <path to policy file>");
-            return;
+            return None;
         }
     }
-    let path = args[1].clone();
-    let body = std::fs::read_to_string(path).unwrap();
 
-    let parsed = BusParser::parse(Rule::body, &body).unwrap_or_else(|e| panic!("{}", e));
-    for pair in parsed {
-        println!("Rule: {:?}", pair.as_rule());
-        for inner_pair in pair.into_inner() {
-            println!("Inner Rule: {:?}", inner_pair.as_rule());
-            println!("Inner Text: {:?}", inner_pair.as_str());
-        }
-    }
-    
+}
+
+#[tokio::main]
+async fn main() {
     let ws_route = warp::path("ws")
         .and(warp::ws())
         .map(|ws: warp::ws::Ws| {
@@ -42,5 +39,14 @@ async fn main() {
 }
 
 async fn handle_websocket(ws: WebSocket) {
-
+    println!("New websocket connection");
+    let policy: Option<Vec<Statement>> = get_policy();
+    let (mut ws_tx, mut ws_rx) = ws.split();
+    while let Some(result) = ws_rx.next().await {
+        let msg = result.unwrap();
+        let message = message_from_str(
+            policy.clone().unwrap(),
+            msg.to_str().unwrap()).unwrap();
+        println!("Message: {:?}", message);
+    }
 }
