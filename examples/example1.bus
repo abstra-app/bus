@@ -12,3 +12,4 @@ response new-user {
 
 allow frontend request new-user
 allow backend response new-user
+

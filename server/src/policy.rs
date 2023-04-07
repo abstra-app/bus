@@ -22,38 +22,38 @@ enum MsgType {
 }
 
 #[derive(Debug, Clone)]
-enum MsgStmt {
+pub enum MsgStmt {
     Broadcast(BroadcastStmt),
     Request(RequestStmt),
     Response(ResponseStmt),
 }
 
 #[derive(Debug, Clone)]
-struct BroadcastStmt {
-    msg_name: String,
-    msg_params: Vec<MsgParam>,
+pub struct BroadcastStmt {
+    pub msg_name: String,
+    pub msg_params: Vec<MsgParam>,
 }
 
 #[derive(Debug, Clone)]
-struct RequestStmt {
-    msg_name: String,
-    msg_params: Vec<MsgParam>,
+pub struct RequestStmt {
+    pub msg_name: String,
+    pub msg_params: Vec<MsgParam>,
 }
 
 #[derive(Debug, Clone)]
-struct ResponseStmt {
-    msg_name: String,
-    msg_params: Vec<MsgParam>,
+pub struct ResponseStmt {
+    pub msg_name: String,
+    pub msg_params: Vec<MsgParam>,
 }
 
 #[derive(Debug, Clone)]
-struct MsgParam {
+pub struct MsgParam {
     param_name: String,
     param_type: String,
 }
 
 #[derive(Debug, Clone)]
-struct RoleStmt {
+pub struct RoleStmt {
     role_name: String,
     extends_role: Option<String>,
 }
