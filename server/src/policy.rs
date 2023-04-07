@@ -48,8 +48,8 @@ pub struct ResponseStmt {
 
 #[derive(Debug, Clone)]
 pub struct MsgParam {
-    param_name: String,
-    param_type: String,
+    pub param_name: String,
+    pub param_type: String,
 }
 
 #[derive(Debug, Clone)]

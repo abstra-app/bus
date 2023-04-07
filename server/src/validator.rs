@@ -5,7 +5,7 @@ use std::fmt::{Display, Formatter, Result as FmtResult};
 use serde::de::{self, MapAccess, Visitor};
 use serde::{Deserialize, Deserializer};
 
-use crate::policy::{BroadcastStmt, MsgStmt, RequestStmt, ResponseStmt, Statement};
+use crate::policy::{BroadcastStmt, MsgStmt, RequestStmt, ResponseStmt, Statement, MsgParam};
 
 #[derive(Debug, Deserialize, Clone)]
 #[serde(untagged)]
@@ -132,12 +132,49 @@ pub enum MessageError {
     InvalidMessageError(Message)
 }
 
+fn validate_parameters(stmt_params: &Vec<MsgParam>, message_params: &Map<String, ParamType>) -> Option<MessageError> {
+    for stmt_param in stmt_params {
+        match message_params.get(&stmt_param.param_name) {
+            Some(value) => {
+                match (stmt_param.param_type.as_str(), value) {
+                    ("string", ParamType::String(_)) => {}
+                    ("int", ParamType::Int(_)) => {}
+                    ("float", ParamType::Float(_)) => {}
+                    ("bool", ParamType::Bool(_)) => {}
+                    _ => {
+                        return Some(MessageError::InvalidMessageError(Message::Request(RequestMessage {
+                            payload: message_params.clone(),
+                            channel: "test".to_string()
+                        })));
+                    }
+                }
+            }
+            None => {
+                return Some(MessageError::InvalidMessageError(Message::Request(RequestMessage {
+                    payload: message_params.clone(),
+                    channel: "test".to_string()
+                })));
+            }
+        }
+    }
+
+    for key in message_params.keys() {
+        if stmt_params.iter().find(|&x| x.param_name == *key).is_none() {
+            return Some(MessageError::InvalidMessageError(Message::Request(RequestMessage {
+                payload: message_params.clone(),
+                channel: "test".to_string()
+            })));
+        }
+    }
+
+    None
+}
 
 fn validate_request<'a>(stmt: &'a RequestStmt, message: &'a RequestMessage) -> Option<MessageError> {
     println!("stmt.msg_name: {}, message.channel: {}", stmt.msg_name, message.channel);
     println!("stmt.msg_name == message.channel: {}", stmt.msg_name == message.channel);
     if stmt.msg_name == message.channel {
-        None
+        return validate_parameters(&stmt.msg_params, &message.payload);
     } else {
         Some(MessageError::InvalidChannelError(InvalidChannelError))
     }
@@ -227,24 +264,121 @@ pub fn message_from_str(
 mod tests {
     use crate::policy::{Statement, MsgStmt, RequestStmt};
 
-    #[test]
-    fn test_validate_request() {
-        let stmt = RequestStmt {
-            msg_name: "test".to_string(),
-            msg_params: vec![],
-        };
-        let message = r#"{
-            "type": "request",
-            "payload": {},
-            "channel": "test"
-        }"#;
+    fn validate_request_io(stmt: RequestStmt, message: &str, expected_error: bool) {
         let message = serde_json::from_str::<crate::validator::Message>(message).unwrap();
         let req_message = match message {
             crate::validator::Message::Request(req) => req,
             _ => panic!("Invalid message type")
         };
         let result = crate::validator::validate_request(&stmt, &req_message);
-        assert!(result.is_none());
+        assert_eq!(!expected_error, result.is_none());
+    }
+
+    #[test]
+    fn test_validate_request_valid() {
+        validate_request_io(
+            RequestStmt {
+                msg_name: "test".to_string(),
+                msg_params: vec![
+                    crate::policy::MsgParam {
+                        param_name: "a".to_string(),
+                        param_type: "string".to_string(),
+                    },
+                    crate::policy::MsgParam {
+                        param_name: "b".to_string(),
+                        param_type: "int".to_string(),
+                    }
+                ],
+            }, 
+            r#"{
+                "type": "request",
+                "payload": {
+                    "a": "1",
+                    "b": 2
+                },
+                "channel": "test"
+            }"#,
+            false
+        );
+    }
+
+    #[test]
+    fn test_validate_request_missing_message_param() {
+        validate_request_io(
+            RequestStmt {
+                msg_name: "test".to_string(),
+                msg_params: vec![
+                    crate::policy::MsgParam {
+                        param_name: "a".to_string(),
+                        param_type: "string".to_string(),
+                    },
+                    crate::policy::MsgParam {
+                        param_name: "b".to_string(),
+                        param_type: "int".to_string(),
+                    }
+                ],
+            }, 
+            r#"{
+                "type": "request",
+                "payload": {
+                    "a": "1"
+                },
+                "channel": "test"
+            }"#,
+            true
+        );
+    }
+
+    #[test]
+    fn test_validate_request_missing_policy_param() {
+        validate_request_io(
+            RequestStmt {
+                msg_name: "test".to_string(),
+                msg_params: vec![
+                    crate::policy::MsgParam {
+                        param_name: "a".to_string(),
+                        param_type: "string".to_string(),
+                    },
+                ],
+            }, 
+            r#"{
+                "type": "request",
+                "payload": {
+                    "a": "1",
+                    "b": 2
+                },
+                "channel": "test"
+            }"#,
+            true
+        );
+    }
+
+    #[test]
+    fn test_validate_request_wrong_parameter_type() {
+        validate_request_io(
+            RequestStmt {
+                msg_name: "test".to_string(),
+                msg_params: vec![
+                    crate::policy::MsgParam {
+                        param_name: "a".to_string(),
+                        param_type: "string".to_string(),
+                    },
+                    crate::policy::MsgParam {
+                        param_name: "b".to_string(),
+                        param_type: "int".to_string(),
+                    }
+                ],
+            }, 
+            r#"{
+                "type": "request",
+                "payload": {
+                    "a": "1",
+                    "b": "2"
+                },
+                "channel": "test"
+            }"#,
+            true
+        );
     }
 
     #[test]
