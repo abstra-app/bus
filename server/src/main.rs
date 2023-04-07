@@ -1,12 +1,10 @@
-use pest::Parser;
-use pest_derive::Parser;
-
-#[derive(Parser)]
-#[grammar = "grammar.pest"]
-struct BusParser;
 use warp::Filter;
 use warp::ws::{WebSocket};
 use std::env;
+
+mod policy;
+use policy::{BusParser, Rule};
+use pest::Parser;
 
 #[tokio::main]
 async fn main() {
@@ -30,6 +28,7 @@ async fn main() {
         println!("Rule: {:?}", pair.as_rule());
         for inner_pair in pair.into_inner() {
             println!("Inner Rule: {:?}", inner_pair.as_rule());
+            println!("Inner Text: {:?}", inner_pair.as_str());
         }
     }
     
