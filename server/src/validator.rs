@@ -182,7 +182,7 @@ fn validate_request<'a>(stmt: &'a RequestStmt, message: &'a RequestMessage) -> O
 
 fn validate_response<'a>(stmt: &'a ResponseStmt, message: &'a ResponseMessage) -> Option<MessageError> {
     if stmt.msg_name == message.channel {
-        None
+        return validate_parameters(&stmt.msg_params, &message.payload);
     } else {
         Some(MessageError::InvalidChannelError(InvalidChannelError))
     }
@@ -190,7 +190,7 @@ fn validate_response<'a>(stmt: &'a ResponseStmt, message: &'a ResponseMessage) -
 
 fn validate_broadcast<'a>(stmt: &'a BroadcastStmt, message: &'a BroadcastMessage) -> Option<MessageError> {
     if stmt.msg_name == message.channel {
-        None
+        return validate_parameters(&stmt.msg_params, &message.payload);
     } else {
         Some(MessageError::InvalidChannelError(InvalidChannelError))
     }
