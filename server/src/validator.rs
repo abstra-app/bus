@@ -1,41 +1,55 @@
 use std::collections::HashMap as Map;
 use std::error::Error;
 use std::fmt::{Display, Formatter, Result as FmtResult};
-
 use serde::de::{self, MapAccess, Visitor};
-use serde::{Deserialize, Deserializer};
-
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use crate::policy::{BroadcastStmt, MsgStmt, RequestStmt, ResponseStmt, Statement, MsgParam};
 
 #[derive(Debug, Deserialize, Clone)]
 #[serde(untagged)]
-enum ParamType {
+pub enum ParamType {
     String(String),
     Int(i32),
     Float(f32),
     Bool(bool),
 }
 
+impl Serialize for ParamType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        match self {
+            ParamType::String(s) => serializer.serialize_str(s),
+            ParamType::Int(i) => serializer.serialize_i32(*i),
+            ParamType::Float(f) => serializer.serialize_f32(*f),
+            ParamType::Bool(b) => serializer.serialize_bool(*b),
+        }
+    }
+}
+
+type Params = Map<String, ParamType>;
+
 #[derive(Debug, Deserialize, Clone)]
-struct RequestMessage {
-    payload: Map<String, ParamType>,
-    channel: String,
+pub struct RequestMessage {
+    pub payload: Params,
+    pub channel: String,
 }
 #[derive(Debug, Deserialize, Clone)]
-struct ResponseMessage {
-    payload: Map<String, ParamType>,
-    channel: String,
+pub struct ResponseMessage {
+    pub payload: Params,
+    pub channel: String,
 }
 
 #[derive(Debug, Deserialize, Clone)]
-struct BroadcastMessage {
-    payload: Map<String, ParamType>,
-    channel: String,
+pub struct BroadcastMessage {
+    pub payload: Params,
+    pub channel: String,
 }
 
 #[derive(Debug, Deserialize, Clone)]
-struct ListenMessage {
-    channel: String,
+pub struct ListenMessage {
+    pub channel: String,
 }
 
 #[derive(Debug, Clone)]
@@ -65,7 +79,7 @@ impl<'de> Deserialize<'de> for Message {
                 A: MapAccess<'de>,
             {
                 let mut message_type: Option<String> = None;
-                let mut payload: Option<Map<String, ParamType>> = None;
+                let mut payload: Option<Params> = None;
                 let mut channel: Option<String> = None; // Add this line
 
                 while let Some(key) = map.next_key()? {
@@ -129,10 +143,11 @@ impl Display for InvalidMessageTypeError {
 pub enum MessageError {
     InvalidChannelError(InvalidChannelError),
     InvalidMessageTypeError(InvalidMessageTypeError),
-    InvalidMessageError(Message)
+    InvalidMessageError(Message),
+    InvalidParameterError(Params),
 }
 
-fn validate_parameters(stmt_params: &Vec<MsgParam>, message_params: &Map<String, ParamType>) -> Option<MessageError> {
+fn validate_parameters(stmt_params: &Vec<MsgParam>, message_params: &Params) -> Option<MessageError> {
     for stmt_param in stmt_params {
         match message_params.get(&stmt_param.param_name) {
             Some(value) => {
@@ -142,28 +157,19 @@ fn validate_parameters(stmt_params: &Vec<MsgParam>, message_params: &Map<String,
                     ("float", ParamType::Float(_)) => {}
                     ("bool", ParamType::Bool(_)) => {}
                     _ => {
-                        return Some(MessageError::InvalidMessageError(Message::Request(RequestMessage {
-                            payload: message_params.clone(),
-                            channel: "test".to_string()
-                        })));
+                        return Some(MessageError::InvalidParameterError(message_params.clone()));
                     }
                 }
             }
             None => {
-                return Some(MessageError::InvalidMessageError(Message::Request(RequestMessage {
-                    payload: message_params.clone(),
-                    channel: "test".to_string()
-                })));
+                return Some(MessageError::InvalidParameterError(message_params.clone()));
             }
         }
     }
 
     for key in message_params.keys() {
         if stmt_params.iter().find(|&x| x.param_name == *key).is_none() {
-            return Some(MessageError::InvalidMessageError(Message::Request(RequestMessage {
-                payload: message_params.clone(),
-                channel: "test".to_string()
-            })));
+            return Some(MessageError::InvalidParameterError(message_params.clone()));
         }
     }
 
