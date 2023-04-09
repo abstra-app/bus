@@ -13,7 +13,7 @@ use uuid::Uuid;
 use serde_json;
 use std::sync::Arc;
 use std::sync::Mutex;
-use crate::validator::ResponseMessage;
+use crate::validator::{ResponseMessage, BroadcastMessage};
 
 
 fn get_policy() -> Vec<Statement> {
@@ -83,7 +83,12 @@ async fn handle_websocket(ws: WebSocket) {
             },
             Message::Listen(event) => {
                 let ws_tx = Arc::clone(&ws_tx);
-                BROKER.listen(uuid, event, Arc::new(move |event| {}));
+                BROKER.listen(uuid, event, Arc::new(move |event: BroadcastMessage| {
+                    let json = serde_json::to_string(&event).unwrap();
+                    let event = warp::ws::Message::text(json);
+                    let mut ws_tx = ws_tx.lock().unwrap();
+                    ws_tx.send(event);
+                }));
             }
         }
     }

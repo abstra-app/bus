@@ -41,7 +41,7 @@ pub struct ResponseMessage {
     pub channel: String,
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct BroadcastMessage {
     pub payload: Params,
     pub channel: String,
