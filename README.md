@@ -74,7 +74,7 @@ type UserCreated = {
 
 ## SDK
 
-Bus provides SDKs for popular programming languages, including JavaScript, Python, Java, C#, and more. Here's an example of how to use the Python SDK:
+Bus provides SDKs for popular programming languages, including JavaScript, Python, Go, Java, C#, and more. Here's an example of how to use the Python SDK:
 
 ```python
 from abstra.bus import listen
