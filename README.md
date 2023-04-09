@@ -57,17 +57,19 @@ This command starts a server with the policies specified in the provided `.bus` 
 
 ```bash
 > bus generate-token --role service-1
-[paste a uuid here]
+e1375bc9-0708-4eb9-b3d6-2c46398d2da9
 ```
 
 This command generates a token to be used by the APIs.
 
 ### Generate types
 
-```bash
+```ts
 > bus generate-types --language typescript
-
-[paste typescript types here]
+type UserCreated = {
+    id: string;
+    created: Date;
+}
 ```
 
 ## SDK
@@ -80,7 +82,7 @@ from abstra.bus import listen
 @listen("user-created")
 def handler(ctx, evt):
     print(evt.id)
-    print(evt.date)
+    print(evt.created)
 ```
 
 ## Installation
