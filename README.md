@@ -4,6 +4,8 @@ Bus is a powerful and efficient server+CLI tool that creates a message queue to 
 
 Designed with simplicity and performance in mind, Bus uses a straightforward declarative language for declaring access control, making it an ideal choice for infrastructure and security engineers, CTOs, and tech leaders who value easily auditable, secure, and scalable solutions.
 
+🚧 This is a work-in-progress project. Please, reach out at help@abstra.app before using it in production.
+
 ## Features
 
 - **Easily Auditable**: All access logs are concentrated in a single source, making auditing a breeze.
