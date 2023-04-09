@@ -15,4 +15,5 @@ allow backend response new-user
 
 allow frontend listen user-created
 allow backend broadcast user-created
-    id: int
+    id: uuid
+    created: datetime
