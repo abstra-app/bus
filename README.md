@@ -34,9 +34,10 @@ allow frontend request new-user
 allow backend response new-user
 
 allow frontend listen user-created
-allow backend broadcast user-created
+allow backend broadcast user-created {
     id: uuid
     created: datetime
+}
 ```
 
 ## CLI Usage
