@@ -1,6 +1,7 @@
 use std::collections::HashMap as Map;
 use std::error::Error;
 use std::fmt::{Display, Formatter, Result as FmtResult};
+use std::fmt;
 use serde::de::{self, MapAccess, Visitor};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use crate::policy::{BroadcastStmt, MsgStmt, RequestStmt, ResponseStmt, Statement, MsgParam};
@@ -118,6 +119,16 @@ impl<'de> Deserialize<'de> for Message {
     }
 }
 
+impl fmt::Display for Message {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Message::Request(request) => write!(f, "Request: {:?}", request),
+            Message::Response(response) => write!(f, "Response: {:?}", response),
+            Message::Broadcast(event) => write!(f, "Broadcast: {:?}", event),
+            Message::Listen(event) => write!(f, "Listen: {:?}", event),
+        }
+    }
+}
 
 #[derive(Debug)]
 pub struct InvalidChannelError;

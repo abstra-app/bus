@@ -14,6 +14,8 @@ use serde_json;
 use std::sync::Arc;
 use std::sync::Mutex;
 use crate::validator::{ResponseMessage, BroadcastMessage};
+mod log;
+use log::{log};
 
 
 fn get_policy() -> Vec<Statement> {
@@ -59,6 +61,7 @@ async fn handle_websocket(ws: WebSocket) {
             POLICY.clone(),
             result.unwrap().to_str().unwrap()
         ).unwrap();
+        log(&message.to_string());
         match message {
             Message::Request(request) => {
                 let ws_tx = Arc::clone(&ws_tx);
